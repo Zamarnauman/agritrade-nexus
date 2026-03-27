@@ -17,6 +17,34 @@
     <!-- Load Babel Standalone -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
+        /* Google Sans Fonts */
+        @font-face {
+          font-family: 'Google Sans';
+          font-style: normal;
+          font-weight: 400;
+          src: url(https://fonts.gstatic.com/s/googlesans/v14/4UaGrENHsxJlGDuGo1OIlL3Owp4.woff2) format('woff2');
+        }
+        @font-face {
+          font-family: 'Google Sans';
+          font-style: normal;
+          font-weight: 500;
+          src: url(https://fonts.gstatic.com/s/googlesans/v14/4UabrENHsxJlGDuGo1OIlLU94YtzCwA.woff2) format('woff2');
+        }
+        @font-face {
+          font-family: 'Google Sans';
+          font-style: normal;
+          font-weight: 700;
+          src: url(https://fonts.gstatic.com/s/googlesans/v14/4UabrENHsxJlGDuGo1OIlLV154tzCwA.woff2) format('woff2');
+        }
+        @font-face {
+          font-family: 'Google Sans';
+          font-style: normal;
+          font-weight: 900;
+          src: url(https://fonts.gstatic.com/s/googlesans/v14/4UabrENHsxJlGDuGo1OIlLZ554tzCwA.woff2) format('woff2');
+        }
+        
+        body { font-family: 'Google Sans', sans-serif !important; }
+
         /* Custom simple styling for animations */
         @keyframes dash {
             to { stroke-dashoffset: -20; }
@@ -39,10 +67,8 @@
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
-import { geoEquirectangular, geoPath } from 'https://esm.sh/d3-geo@3';
-import { feature } from 'https://esm.sh/topojson-client@3';
 import { 
   Globe, Zap, ArrowRight, Activity, Sprout,
   Map as MapIcon, Wheat, Leaf, Dna, CloudRain, Cpu,
@@ -180,20 +206,6 @@ const NODES = {
 
 function App() {
   const [selectedRegion, setSelectedRegion] = useState(null);
-  const [worldMapPaths, setWorldMapPaths] = useState([]);
-
-  useEffect(() => {
-    fetch('https://unpkg.com/world-atlas@2.0.2/countries-110m.json')
-      .then(res => res.json())
-      .then(topoData => {
-         const geoData = feature(topoData, topoData.objects.countries);
-         // Standard mathematical projection perfectly centered to our 1000x500 box without skewing
-         const projection = geoEquirectangular().scale(160).translate([500, 280]); 
-         const pathGen = geoPath().projection(projection);
-         setWorldMapPaths(geoData.features.map(f => pathGen(f)));
-      })
-      .catch(err => console.error("Error fetching map geometry:", err));
-  }, []);
 
   const tradeFlows = useMemo(() => {
     if (!selectedRegion) return [];
@@ -277,12 +289,17 @@ function App() {
           <svg viewBox="0 0 1000 500" className="w-full h-auto">
             <rect width="1000" height="500" fill="#f8fafc" />
             
-            {/* Highly detailed TopoJSON equirectangular background */}
-            <g className="fill-slate-200 stroke-slate-50 stroke-[0.5] pointer-events-none origin-center">
-                {worldMapPaths.map((d, idx) => (
-                    <path key={idx} d={d} className="transition-all duration-1000" />
-                ))}
-            </g>
+            {/* Guaranteed Static Map Override */}
+            <image 
+               href="https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg" 
+               width="1000" 
+               height="580" 
+               x="0"
+               y="-40"
+               preserveAspectRatio="none"
+               className="opacity-15 pointer-events-none" 
+               style={{ filter: "grayscale(100%) brightness(0.5)" }}
+            />
 
             {tradeFlows.map((flow, i) => (
               <path key={i} d={createCurvedPath(flow.startX, flow.startY, flow.endX, flow.endY)} fill="none" className="stroke-blue-500 opacity-60 flow-line" strokeWidth="2.5" />
