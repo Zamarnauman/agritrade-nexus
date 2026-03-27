@@ -39,8 +39,10 @@
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
+import { geoEquirectangular, geoPath } from 'https://esm.sh/d3-geo@3';
+import { feature } from 'https://esm.sh/topojson-client@3';
 import { 
   Globe, Zap, ArrowRight, Activity, Sprout,
   Map as MapIcon, Wheat, Leaf, Dna, CloudRain, Cpu,
@@ -178,76 +180,20 @@ const NODES = {
 
 function App() {
   const [selectedRegion, setSelectedRegion] = useState(null);
-  const [apiKey, setApiKey] = useState(localStorage?.getItem('gemini_api_key') || '');
-  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
-  const [globalBriefing, setGlobalBriefing] = useState('');
-  const [briefingLoading, setBriefingLoading] = useState(false);
-  const [strategicAssessment, setStrategicAssessment] = useState('');
-  const [assessmentLoading, setAssessmentLoading] = useState(false);
+  const [worldMapPaths, setWorldMapPaths] = useState([]);
 
-  const callGeminiAPI = async (prompt, systemInstruction) => {
-    const key = apiKey;
-    if (!key) throw new Error("API Key is missing!");
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`;
-    const retries = 5;
-    const backoff = 1000;
-    
-    for (let i = 0; i < retries; i++) {
-        try {
-            const response = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    systemInstruction: { parts: [{ text: systemInstruction }] },
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
-            });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const data = await response.json();
-            return data.candidates[0].content.parts[0].text;
-        } catch (e) {
-            if (i === retries - 1) throw e;
-            await new Promise(r => setTimeout(r, backoff * Math.pow(2, i)));
-        }
-    }
-  };
-
-  const runGlobalBriefing = async () => {
-    if (!apiKey) {
-      alert("Please enter a Gemini API Key in the settings field at the top right.");
-      return;
-    }
-    setBriefingLoading(true);
-    setIsAiModalOpen(true);
-    try {
-      const sysInst = "You are an executive agricultural commodities analyst. Produce a brief, concise markdown report.";
-      const pmt = `Here is our 2026 data. Identify the 2 most vulnerable regions and 2 critical chokepoints, returning a concise macro outlook.\n\nCrops: ${JSON.stringify(TOP_CROPS)}\nCountries: ${JSON.stringify(COUNTRY_DATA)}`;
-      const res = await callGeminiAPI(pmt, sysInst);
-      setGlobalBriefing(res);
-    } catch(e) {
-      setGlobalBriefing("Error fetching briefing: " + e.message);
-    } finally {
-      setBriefingLoading(false);
-    }
-  };
-
-  const runStrategicAssessment = async () => {
-    if (!apiKey) {
-      alert("Please enter a Gemini API Key.");
-      return;
-    }
-    setAssessmentLoading(true);
-    try {
-      const sysInst = "You are an executive agricultural commodities analyst. Keep responses under 150 words. Be direct and insightful.";
-      const pmt = `Analyze fertilizer supply chain risks, corporate dependencies, and maritime disruption impacts for this specific country network:\n${JSON.stringify(COUNTRY_DATA[selectedRegion])}`;
-      const res = await callGeminiAPI(pmt, sysInst);
-      setStrategicAssessment(res);
-    } catch (e) {
-      setStrategicAssessment("Error fetching assessment: " + e.message);
-    } finally {
-      setAssessmentLoading(false);
-    }
-  };
+  useEffect(() => {
+    fetch('https://unpkg.com/world-atlas@2.0.2/countries-110m.json')
+      .then(res => res.json())
+      .then(topoData => {
+         const geoData = feature(topoData, topoData.objects.countries);
+         // Standard mathematical projection perfectly centered to our 1000x500 box without skewing
+         const projection = geoEquirectangular().scale(160).translate([500, 280]); 
+         const pathGen = geoPath().projection(projection);
+         setWorldMapPaths(geoData.features.map(f => pathGen(f)));
+      })
+      .catch(err => console.error("Error fetching map geometry:", err));
+  }, []);
 
   const tradeFlows = useMemo(() => {
     if (!selectedRegion) return [];
@@ -303,14 +249,6 @@ function App() {
                </div>
             </div>
           </div>
-          
-          <div className="flex items-center gap-4 w-full md:w-auto">
-             <input type="password" placeholder="Gemini API Key..." aria-label="Gemini API Key" value={apiKey} onChange={e => { setApiKey(e.target.value); localStorage?.setItem('gemini_api_key', e.target.value); }} className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg shadow-inner text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-56 transition-all" />
-             <button onClick={runGlobalBriefing} disabled={briefingLoading} className="flex whitespace-nowrap items-center gap-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white px-5 py-2.5 rounded-lg shadow-md font-semibold transition-all">
-               {briefingLoading ? <span className="animate-spin text-xl leading-none">↻</span> : <Zap size={18} />}
-               Global AI Briefing
-             </button>
-          </div>
         </header>
 
         {/* TOP STATS */}
@@ -339,12 +277,11 @@ function App() {
           <svg viewBox="0 0 1000 500" className="w-full h-auto">
             <rect width="1000" height="500" fill="#f8fafc" />
             
-            <g className="opacity-10 pointer-events-none">
-                <circle cx="200" cy="200" r="150" fill="#cbd5e1" />
-                <circle cx="650" cy="220" r="180" fill="#cbd5e1" />
-                <circle cx="850" cy="350" r="80" fill="#cbd5e1" />
-                <ellipse cx="600" cy="100" rx="300" ry="100" fill="#cbd5e1" />
-                <ellipse cx="280" cy="350" rx="100" ry="150" fill="#cbd5e1" />
+            {/* Highly detailed TopoJSON equirectangular background */}
+            <g className="fill-slate-200 stroke-slate-50 stroke-[0.5] pointer-events-none origin-center">
+                {worldMapPaths.map((d, idx) => (
+                    <path key={idx} d={d} className="transition-all duration-1000" />
+                ))}
             </g>
 
             {tradeFlows.map((flow, i) => (
@@ -364,7 +301,7 @@ function App() {
                };
                
                return (
-                 <g key={country} className={`transition-all duration-300 transform origin-center ${opacity} cursor-pointer`} onClick={() => { if (node.isProducer) { setSelectedRegion(country); setStrategicAssessment(''); } }}>
+                 <g key={country} className={`transition-all duration-300 transform origin-center ${opacity} cursor-pointer`} onClick={() => { if (node.isProducer) { setSelectedRegion(country); } }}>
                     {node.isProducer && (
                        <circle cx={node.x} cy={node.y} r={isSelected ? 8 : 6} className={isSelected ? "fill-blue-600 stroke-white stroke-2 drop-shadow-lg" : "fill-slate-700"} />
                     )}
@@ -389,7 +326,7 @@ function App() {
         {/* DETAIL PANEL */}
         {selectedRegion && COUNTRY_DATA[selectedRegion] && (
           <div className="bg-white rounded-2xl shadow border border-slate-200 fadeIn">
-            <div className="p-6 md:p-8 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="p-6 md:p-8 border-b border-slate-100 flex flex-col justify-between items-start gap-6">
               <div>
                 <div className="flex items-center gap-3 mb-3">
                    <h2 className="text-3xl font-black text-slate-900">{selectedRegion}</h2>
@@ -401,18 +338,7 @@ function App() {
                 </div>
                 <p className="text-slate-600 max-w-2xl font-medium leading-relaxed">{COUNTRY_DATA[selectedRegion].description}</p>
               </div>
-              <button onClick={runStrategicAssessment} disabled={assessmentLoading} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-xl font-bold transition-all shadow-md active:bg-indigo-800 w-full md:w-auto justify-center whitespace-nowrap">
-                 {assessmentLoading ? <span className="animate-spin text-xl leading-none">↻</span> : <Cpu size={18} />}
-                 Strategic AI Assessment
-              </button>
             </div>
-            
-            {strategicAssessment && (
-               <div className="px-6 md:px-8 py-6 bg-indigo-50/50 border-b border-indigo-100 fadeIn">
-                  <div className="mb-2 uppercase text-xs font-bold text-indigo-800 tracking-widest flex items-center gap-2"><Cpu size={14} /> AI Analysis</div>
-                  <div className="prose prose-sm prose-indigo max-w-none text-indigo-900 font-medium" dangerouslySetInnerHTML={{ __html: strategicAssessment.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
-               </div>
-            )}
 
             <div className="p-6 md:p-8">
                 <h3 className="uppercase text-xs font-bold text-slate-500 tracking-widest mb-6">Input Matrix (NPK)</h3>
@@ -460,30 +386,6 @@ function App() {
           </div>
         )}
       </div>
-
-      {/* AI MODAL */}
-      {isAiModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 fadeIn">
-           <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden border border-slate-200">
-             <div className="px-8 py-5 flex justify-between items-center bg-slate-50 border-b border-slate-100">
-               <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3"><Globe className="text-blue-600" /> Executive AI Briefing</h2>
-               <button onClick={() => setIsAiModalOpen(false)} className="text-slate-400 hover:text-slate-800 transition-colors p-2 -mr-2 rounded-full hover:bg-slate-200">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-               </button>
-             </div>
-             <div className="p-8 overflow-y-auto w-full prose prose-slate max-w-none prose-h2:text-xl prose-h3:text-lg prose-p:text-slate-600">
-                {briefingLoading ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-slate-500">
-                     <span className="animate-pulse text-5xl mb-6">✨</span>
-                     <p className="text-lg font-medium">Synthesizing global trade node data...</p>
-                  </div>
-                ) : (
-                   <div dangerouslySetInnerHTML={{ __html: globalBriefing.replace(/\n\n/g, '<br/><br/>').replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>').replace(/## (.*?)<br\/>/g, '<h2 class="mt-4 mb-2">$1</h2>') }} />
-                )}
-             </div>
-           </div>
-        </div>
-      )}
     </div>
   );
 }
