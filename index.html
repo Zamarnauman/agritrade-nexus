@@ -78,7 +78,7 @@ import {
 const TOP_CROPS = [
   { name: 'Maize', calories: '19.5%', regions: ['USA', 'China', 'Brazil'], icon: Sprout, color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
   { name: 'Rice', calories: '16.5%', regions: ['China', 'India', 'Indonesia'], icon: CloudRain, color: 'bg-orange-100 text-orange-800 border-orange-200' },
-  { name: 'Wheat', calories: '15.0%', regions: ['China', 'India', 'USA', 'Ukraine', 'Australia', 'Canada', 'Egypt', 'Pakistan'], icon: Wheat, color: 'bg-amber-100 text-amber-800 border-amber-200' },
+  { name: 'Wheat', calories: '15.0%', regions: ['China', 'India', 'USA', 'Ukraine', 'Australia', 'Canada', 'Pakistan'], icon: Wheat, color: 'bg-amber-100 text-amber-800 border-amber-200' },
   { name: 'Cassava', calories: '2.6%', regions: ['Nigeria', 'Brazil', 'Indonesia'], icon: Dna, color: 'bg-lime-100 text-lime-800 border-lime-200' },
   { name: 'Soybeans', calories: '2.1%', regions: ['Brazil', 'USA', 'India', 'China'], icon: Leaf, color: 'bg-green-100 text-green-800 border-green-200' }
 ];
@@ -170,38 +170,29 @@ const COUNTRY_DATA = {
     crops: ['Rice', 'Cassava'],
     inputs: [
       { type: 'Nitrogen (N)', rawMaterial: 'Natural Gas', companies: ['Pupuk Indonesia'], sources: ['Indonesia'], status: 'Stable', statusReason: 'State-owned enterprises ensure domestic sufficiency.' },
-      { type: 'Phosphorus (P)', rawMaterial: 'Phosphate Rock', companies: ['Pupuk Indonesia'], sources: ['Morocco', 'Egypt'], status: 'Deficit', statusReason: 'High reliance on imported rock for processing.' },
+      { type: 'Phosphorus (P)', rawMaterial: 'Phosphate Rock', companies: ['Pupuk Indonesia'], sources: ['Morocco'], status: 'Deficit', statusReason: 'High reliance on imported rock for processing.' },
       { type: 'Potassium (K)', rawMaterial: 'MOP', companies: ['Uralkali (Supplier)'], sources: ['Canada', 'Russia'], status: 'Vulnerable', statusReason: 'Significant import requirement for cash crops.' }
-    ]
-  },
-  'Egypt': {
-    description: 'Major wheat importer and vital regional supplier of phosphate and nitrogen fertilizers.',
-    crops: ['Wheat'],
-    inputs: [
-      { type: 'Nitrogen (N)', rawMaterial: 'Natural Gas', companies: ['Abu Qir', 'OCI'], sources: ['Egypt'], status: 'Stable', statusReason: 'Export hub utilizing domestic Mediterranean gas finds.' },
-      { type: 'Phosphorus (P)', rawMaterial: 'Phosphate Rock', companies: ['NCIC'], sources: ['Egypt'], status: 'Stable', statusReason: 'Major exporter holding significant regional reserves.' },
-      { type: 'Potassium (K)', rawMaterial: 'Potash', companies: ['Arab Potash (Jordan)'], sources: ['Russia'], status: 'Deficit', statusReason: 'Net importer.' }
     ]
   }
 };
 
 const NODES = {
-  'USA': { x: 180, y: 150, isProducer: true, isSupplier: true },
-  'Canada': { x: 200, y: 100, isProducer: true, isSupplier: true },
-  'Brazil': { x: 280, y: 320, isProducer: true, isSupplier: false },
-  'China': { x: 750, y: 180, isProducer: true, isSupplier: true },
-  'India': { x: 680, y: 240, isProducer: true, isSupplier: false },
-  'Australia': { x: 800, y: 380, isProducer: true, isSupplier: false },
-  'Nigeria': { x: 480, y: 260, isProducer: true, isSupplier: false },
-  'Ukraine': { x: 550, y: 140, isProducer: true, isSupplier: false },
-  'Pakistan': { x: 640, y: 220, isProducer: true, isSupplier: false },
-  'Indonesia': { x: 780, y: 300, isProducer: true, isSupplier: false },
-  'Egypt': { x: 520, y: 200, isProducer: true, isSupplier: false },
-  'Morocco': { x: 440, y: 190, isProducer: false, isSupplier: true },
-  'Saudi Arabia': { x: 570, y: 230, isProducer: false, isSupplier: true },
-  'Qatar': { x: 590, y: 240, isProducer: false, isSupplier: true },
-  'UAE': { x: 600, y: 245, isProducer: false, isSupplier: true },
-  'Russia': { x: 650, y: 110, isProducer: false, isSupplier: true },
+  'USA': { x: 231, y: 172, isProducer: true, isSupplier: true },
+  'Canada': { x: 223, y: 116, isProducer: true, isSupplier: true },
+  'Brazil': { x: 356, y: 327, isProducer: true, isSupplier: false },
+  'China': { x: 788, y: 181, isProducer: true, isSupplier: true },
+  'India': { x: 720, y: 225, isProducer: true, isSupplier: false },
+  'Australia': { x: 868, y: 367, isProducer: true, isSupplier: false },
+  'Nigeria': { x: 522, y: 259, isProducer: true, isSupplier: false },
+  'Ukraine': { x: 589, y: 138, isProducer: true, isSupplier: false },
+  'Pakistan': { x: 690, y: 200, isProducer: true, isSupplier: false },
+  'Indonesia': { x: 816, y: 296, isProducer: true, isSupplier: false },
+  'Morocco': { x: 483, y: 191, isProducer: false, isSupplier: true },
+  'Iran': { x: 655, y: 195, isProducer: false, isSupplier: true },
+  'Saudi Arabia': { x: 615, y: 220, isProducer: false, isSupplier: true },
+  'Qatar': { x: 635, y: 215, isProducer: false, isSupplier: true },
+  'UAE': { x: 645, y: 220, isProducer: false, isSupplier: true },
+  'Russia': { x: 666, y: 104, isProducer: false, isSupplier: true },
 };
 
 function App() {
